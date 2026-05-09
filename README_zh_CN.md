@@ -1,3 +1,5 @@
+<img src="src/main/resources/META-INF/pluginIcon.svg" alt="插件图标" width="80" align="left" style="margin-right:16px"/>
+
 # Composite Build Manager — JetBrains 插件
 
 [English](README.md) | 中文
