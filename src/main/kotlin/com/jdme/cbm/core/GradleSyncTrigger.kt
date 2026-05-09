@@ -11,9 +11,6 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
  *
  * 通过 IntelliJ Platform 的 ExternalSystemUtil API 触发，
  * 效果等同于点击 Android Studio 工具栏上的 "Sync Project with Gradle Files"。
- *
- * ImportSpecBuilder 是 ExternalSystemUtil 的静态内部类，
- * refreshProjects 可直接接受 builder 实例（无需调用 .build()）。
  */
 object GradleSyncTrigger {
 
@@ -27,10 +24,8 @@ object GradleSyncTrigger {
     fun sync(project: Project) {
         LOG.info("Triggering Gradle sync for project: ${project.name}")
         try {
-            @Suppress("DEPRECATION")
             ExternalSystemUtil.refreshProjects(
                 ImportSpecBuilder(project, GradleConstants.SYSTEM_ID)
-                    .forceWhenUptodate(true)
             )
         } catch (e: Exception) {
             LOG.error("Failed to trigger Gradle sync", e)
