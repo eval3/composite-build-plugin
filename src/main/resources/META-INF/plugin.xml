@@ -3,17 +3,21 @@
     <name>Composite Build Manager</name>
     <vendor>JDME</vendor>
     <description><![CDATA[
-        <img src="https://coding.jd.com/jme/composite-build-plugin/raw/master/screenshots/preview.png" width="600"/><br/><br/>
-        管理 Android 多模块复合构建（Composite Build）配置。<br/>
-        通过侧边面板可视化管理所有子模块的构建模式，支持一键切换 includeBuild 并自动触发 Gradle Sync。<br/><br/>
-        功能：
+        Composite Build Manager — Visualize and manage Android multi-module Composite Build configurations from a side panel in Android Studio.<br/><br/>
+        Switch between LOCAL (source) and MAVEN (AAR) build modes per module with one click. Changes are written automatically and take effect on the next Gradle build.<br/><br/>
+        <b>Features</b>
         <ul>
-          <li>可视化展示所有子模块的 LOCAL / MAVEN / MISSING 状态</li>
-          <li>一键切换 includeBuild 模式（自动生成/修改 include_build.gradle）</li>
-          <li>支持一键下载缺失模块（委托 Node.js 脚本或 git clone）</li>
-          <li>集成 Gradle Sync 触发，有未同步改动时按钮高亮提醒</li>
-          <li>显示各模块当前 Git 分支，支持一键切换（含未提交修改检查）</li>
-          <li>支持组件名搜索过滤</li>
+          <li><b>Module status visualization</b> — Displays LOCAL / MAVEN / MISSING status for all submodules</li>
+          <li><b>One-click toggle</b> — Check/uncheck to switch includeBuild; state is written automatically</li>
+          <li><b>Batch operations</b> — Switch all modules to LOCAL or MAVEN with a single click</li>
+          <li><b>Download missing modules</b> — Auto-clone missing submodules via the "↓ Download" button</li>
+          <li><b>Gradle Sync</b> — Trigger Gradle sync after config changes; button highlights when there are unsynced changes</li>
+          <li><b>Branch management</b> — Shows the current Git branch per module; supports one-click switching with uncommitted-change checks</li>
+          <li><b>Search &amp; filter</b> — Filter modules by name or by LOCAL / MAVEN / CUSTOM status</li>
+          <li><b>Custom components</b> — Manually add local components with dependency substitution rules; paths are persisted</li>
+          <li><b>Line markers</b> — Shows markers in build.gradle for dependencies that support composite build; resolves group:artifact from Version Catalog</li>
+          <li><b>Auto-refresh</b> — Refreshes toggle state when the panel is shown or collapsed/expanded</li>
+          <li><b>Context menu</b> — Right-click in Project view → Composite Build for quick access</li>
         </ul>
     ]]></description>
 
@@ -40,6 +44,7 @@
             factoryClass="com.jdme.cbm.ui.CompositeBuildToolWindow"
             anchor="right"
             icon="/icons/composite_build.svg"
+            selectedIcon="/icons/composite_build_selected.svg"
             defaultWidth="300"
         />
 
