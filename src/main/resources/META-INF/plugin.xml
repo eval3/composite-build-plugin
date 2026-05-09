@@ -1,5 +1,5 @@
 <idea-plugin>
-    <id>com.jdme.composite-build-manager</id>
+    <id>com.eval.composite-build-manager</id>
     <name>Composite Build Manager</name>
     <vendor>JDME</vendor>
     <description><![CDATA[
