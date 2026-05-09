@@ -1,4 +1,4 @@
-package com.jdme.cbm.ui
+package com.eval.cbm.ui
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.options.Configurable
@@ -6,9 +6,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.FormBuilder
-import com.jdme.cbm.CbmBundle
-import com.jdme.cbm.core.CbmProjectService
-import com.jdme.cbm.core.CbmProjectSettings
+import com.eval.cbm.CbmBundle
+import com.eval.cbm.core.CbmProjectService
+import com.eval.cbm.core.CbmProjectSettings
 import javax.swing.JComponent
 import javax.swing.JPanel
 

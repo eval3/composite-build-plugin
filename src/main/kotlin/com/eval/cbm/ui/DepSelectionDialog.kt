@@ -1,4 +1,4 @@
-package com.jdme.cbm.ui
+package com.eval.cbm.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
@@ -6,9 +6,9 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
-import com.jdme.cbm.CbmBundle
-import com.jdme.cbm.core.LocalBuildScanner
-import com.jdme.cbm.model.DepSubstitution
+import com.eval.cbm.CbmBundle
+import com.eval.cbm.core.LocalBuildScanner
+import com.eval.cbm.model.DepSubstitution
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.GridBagConstraints
@@ -26,7 +26,7 @@ class DepSelectionDialog(
     private val project: Project,
     private val moduleName: String,
     private val scanResult: LocalBuildScanner.ScanResult,
-    private val projectService: com.jdme.cbm.core.CbmProjectService,
+    private val projectService: com.eval.cbm.core.CbmProjectService,
     suggestedDep: String? = null
 ) : DialogWrapper(project) {
 

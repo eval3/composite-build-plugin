@@ -1,4 +1,4 @@
-package com.jdme.cbm.ui
+package com.eval.cbm.ui
 
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.ui.ConsoleView
@@ -14,16 +14,16 @@ import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.JBUI
-import com.jdme.cbm.CbmBundle
-import com.jdme.cbm.core.CbmProjectService
-import com.jdme.cbm.core.GradleSyncTrigger
-import com.jdme.cbm.core.ModuleDownloader
-import com.jdme.cbm.model.ModuleConfig
-import com.jdme.cbm.model.ModuleStatus
-import com.jdme.cbm.model.getLocalGitBranch
-import com.jdme.cbm.model.getAllBranches
-import com.jdme.cbm.model.checkoutBranch
-import com.jdme.cbm.model.hasUncommittedChanges
+import com.eval.cbm.CbmBundle
+import com.eval.cbm.core.CbmProjectService
+import com.eval.cbm.core.GradleSyncTrigger
+import com.eval.cbm.core.ModuleDownloader
+import com.eval.cbm.model.ModuleConfig
+import com.eval.cbm.model.ModuleStatus
+import com.eval.cbm.model.getLocalGitBranch
+import com.eval.cbm.model.getAllBranches
+import com.eval.cbm.model.checkoutBranch
+import com.eval.cbm.model.hasUncommittedChanges
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.ui.AnimatedIcon

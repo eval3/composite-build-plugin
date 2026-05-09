@@ -1,8 +1,8 @@
-package com.jdme.cbm.core
+package com.eval.cbm.core
 
 import com.intellij.openapi.diagnostic.logger
-import com.jdme.cbm.model.ModuleConfig
-import com.jdme.cbm.model.checkLocalDir
+import com.eval.cbm.model.ModuleConfig
+import com.eval.cbm.model.checkLocalDir
 import java.io.File
 
 /**

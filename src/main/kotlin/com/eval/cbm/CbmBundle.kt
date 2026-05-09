@@ -1,4 +1,4 @@
-package com.jdme.cbm
+package com.eval.cbm
 
 import com.intellij.DynamicBundle
 import org.jetbrains.annotations.PropertyKey

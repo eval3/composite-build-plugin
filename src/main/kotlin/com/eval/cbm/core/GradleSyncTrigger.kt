@@ -1,4 +1,4 @@
-package com.jdme.cbm.core
+package com.eval.cbm.core
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder

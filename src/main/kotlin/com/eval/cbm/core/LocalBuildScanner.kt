@@ -1,6 +1,6 @@
-package com.jdme.cbm.core
+package com.eval.cbm.core
 
-import com.jdme.cbm.CbmBundle
+import com.eval.cbm.CbmBundle
 import java.io.File
 
 object LocalBuildScanner {

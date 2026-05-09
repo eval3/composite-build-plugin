@@ -1,4 +1,4 @@
-package com.jdme.cbm.core
+package com.eval.cbm.core
 
 import com.intellij.execution.filters.TextConsoleBuilderFactory
 import com.intellij.execution.ui.ConsoleView
@@ -6,8 +6,8 @@ import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.jdme.cbm.CbmBundle
-import com.jdme.cbm.model.ModuleConfig
+import com.eval.cbm.CbmBundle
+import com.eval.cbm.model.ModuleConfig
 import java.io.File
 import java.io.InputStream
 

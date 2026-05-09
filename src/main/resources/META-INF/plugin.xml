@@ -33,16 +33,16 @@
         <!-- Gutter Icon：在 .gradle 依赖行左侧显示「+」按钮，触发 CBM 复合构建配置 -->
         <codeInsight.lineMarkerProvider
             language="Groovy"
-            implementationClass="com.jdme.cbm.actions.CbmLineMarkerProvider"/>
+            implementationClass="com.eval.cbm.actions.CbmLineMarkerProvider"/>
         <codeInsight.lineMarkerProvider
             language="kotlin"
-            implementationClass="com.jdme.cbm.actions.CbmLineMarkerProvider"/>
+            implementationClass="com.eval.cbm.actions.CbmLineMarkerProvider"/>
 
         <!-- Tool Window：侧边面板 -->
         <toolWindow
             id="Composite Build"
             displayName="Composite Build"
-            factoryClass="com.jdme.cbm.ui.CompositeBuildToolWindow"
+            factoryClass="com.eval.cbm.ui.CompositeBuildToolWindow"
             anchor="right"
             icon="/icons/composite_build.svg"
             selectedIcon="/icons/composite_build_selected.svg"
@@ -51,24 +51,24 @@
 
         <!-- 持久化：记住用户手动指定的配置文件路径 -->
         <applicationService
-            serviceImplementation="com.jdme.cbm.core.CbmSettings"
+            serviceImplementation="com.eval.cbm.core.CbmSettings"
         />
 
         <!-- 项目级服务：业务逻辑协调层 -->
         <projectService
-            serviceImplementation="com.jdme.cbm.core.CbmProjectService"
+            serviceImplementation="com.eval.cbm.core.CbmProjectService"
         />
 
         <!-- 项目级设置：用户自定义配置文件路径 -->
         <projectService
-            serviceImplementation="com.jdme.cbm.core.CbmProjectSettings"
+            serviceImplementation="com.eval.cbm.core.CbmProjectSettings"
         />
 
         <!-- Settings > Tools > Composite Build Manager -->
         <projectConfigurable
             parentId="tools"
-            instance="com.jdme.cbm.ui.CbmProjectConfigurable"
-            id="com.jdme.cbm.CbmProjectConfigurable"
+            instance="com.eval.cbm.ui.CbmProjectConfigurable"
+            id="com.eval.cbm.CbmProjectConfigurable"
             displayName="Composite Build Manager"
         />
     </extensions>
@@ -78,21 +78,21 @@
     <actions>
         <!-- 右键菜单：切换构建模式 -->
         <group
-            id="com.jdme.cbm.CompositeBuildMenu"
+            id="com.eval.cbm.CompositeBuildMenu"
             text="Composite Build"
             popup="true">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
 
             <action
-                id="com.jdme.cbm.SwitchBuildMode"
-                class="com.jdme.cbm.actions.SwitchBuildModeAction"
+                id="com.eval.cbm.SwitchBuildMode"
+                class="com.eval.cbm.actions.SwitchBuildModeAction"
                 text="%action.switch_build_mode.text%"
                 description="%action.switch_build_mode.description%"
             />
 
             <action
-                id="com.jdme.cbm.SyncGradle"
-                class="com.jdme.cbm.actions.SyncGradleAction"
+                id="com.eval.cbm.SyncGradle"
+                class="com.eval.cbm.actions.SyncGradleAction"
                 text="Sync Gradle Now"
                 description="%action.sync_gradle.description%"
             />

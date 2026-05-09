@@ -1,8 +1,8 @@
-package com.jdme.cbm.actions
+package com.eval.cbm.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.jdme.cbm.core.GradleSyncTrigger
+import com.eval.cbm.core.GradleSyncTrigger
 
 /**
  * 右键菜单 Action：立即触发 Gradle Sync。

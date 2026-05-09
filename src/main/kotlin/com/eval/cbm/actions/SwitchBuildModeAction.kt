@@ -1,4 +1,4 @@
-package com.jdme.cbm.actions
+package com.eval.cbm.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -6,11 +6,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBScrollPane
-import com.jdme.cbm.CbmBundle
-import com.jdme.cbm.core.CbmProjectService
-import com.jdme.cbm.core.GradleSyncTrigger
-import com.jdme.cbm.model.ModuleConfig
-import com.jdme.cbm.model.ModuleStatus
+import com.eval.cbm.CbmBundle
+import com.eval.cbm.core.CbmProjectService
+import com.eval.cbm.core.GradleSyncTrigger
+import com.eval.cbm.model.ModuleConfig
+import com.eval.cbm.model.ModuleStatus
 import javax.swing.*
 
 /**

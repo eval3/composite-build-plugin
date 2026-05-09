@@ -1,4 +1,4 @@
-package com.jdme.cbm.actions
+package com.eval.cbm.actions
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
 import com.intellij.codeInsight.daemon.LineMarkerProvider
@@ -10,10 +10,10 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
-import com.jdme.cbm.CbmBundle
-import com.jdme.cbm.core.CbmProjectService
-import com.jdme.cbm.core.LocalBuildScanner
-import com.jdme.cbm.ui.DepSelectionDialog
+import com.eval.cbm.CbmBundle
+import com.eval.cbm.core.CbmProjectService
+import com.eval.cbm.core.LocalBuildScanner
+import com.eval.cbm.ui.DepSelectionDialog
 import java.io.File
 import java.util.function.Supplier
 

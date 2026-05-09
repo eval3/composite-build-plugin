@@ -1,6 +1,6 @@
-package com.jdme.cbm.model
+package com.eval.cbm.model
 
-import com.jdme.cbm.CbmBundle
+import com.eval.cbm.CbmBundle
 import java.io.File
 
 /**
