@@ -508,6 +508,11 @@ class ModuleListPanel(private val project: Project) : JPanel(BorderLayout()) {
             filterStatus = null
         }
         filterLocalCheckBox.isEnabled = localCount > 0
+        if (mavenCount == 0 && filterMavenCheckBox.isSelected) {
+            filterMavenCheckBox.isSelected = false
+            filterStatus = null
+        }
+        filterMavenCheckBox.isEnabled = mavenCount > 0
         if (customCount == 0 && filterCustomCheckBox.isSelected) {
             filterCustomCheckBox.isSelected = false
             filterCustom = false
