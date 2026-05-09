@@ -29,7 +29,4 @@ class CompositeBuildToolWindow : ToolWindowFactory {
 
     @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
     override fun isApplicable(project: Project) = true
-
-    @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
-    override fun isDoNotActivateOnStart() = false
 }
