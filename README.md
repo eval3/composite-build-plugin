@@ -6,6 +6,8 @@ English | [中文](README_zh_CN.md)
 
 An Android Studio plugin for managing multi-module Composite Build configuration.
 
+<div align="center"><img src="screenshots/showcase_en.png" alt="Composite Build Plugin Showcase" width="800"/></div>
+
 ## Features
 
 | Feature | Description |

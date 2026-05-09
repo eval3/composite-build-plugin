@@ -6,6 +6,8 @@
 
 管理 Android 多模块复合构建（Composite Build）配置的 Android Studio 插件。
 
+<div align="center"><img src="screenshots/showcase_zh_CN.png" alt="Composite Build 插件宣传图" width="800"/></div>
+
 ## 功能
 
 | 功能 | 描述 |
