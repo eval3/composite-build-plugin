@@ -38,6 +38,7 @@
     <depends>com.intellij.modules.platform</depends>
     <depends>com.intellij.gradle</depends>
     <depends>org.jetbrains.android</depends>
+    <depends optional="true" config-file="optional-mcp.xml">com.intellij.mcpServer</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <!-- Gutter Icon：在 .gradle 依赖行左侧显示「+」按钮，触发 CBM 复合构建配置 -->

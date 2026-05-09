@@ -3,6 +3,7 @@ import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 plugins {
     id("java")
     id("org.jetbrains.kotlin.jvm") version "2.3.0"
+    id("org.jetbrains.kotlin.plugin.serialization") version "2.3.0"
     id("org.jetbrains.intellij.platform") version "2.2.1"
 }
 
@@ -43,6 +44,14 @@ dependencies {
         pluginVerifier()
         zipSigner()
         testFramework(TestFrameworkType.Platform)
+    }
+
+    compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+
+    // 编译期引用本机已安装的 MCP Server 插件 jar（运行时由 IDE 提供，不打包进发布产物）
+    val mcpJar = file("${System.getProperty("user.home")}/Library/Application Support/JetBrains/IdeaIC2025.2/plugins/mcpserver/lib/mcpserver.jar")
+    if (mcpJar.exists()) {
+        compileOnly(files(mcpJar))
     }
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
