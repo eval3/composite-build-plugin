@@ -1,7 +1,8 @@
 <idea-plugin>
     <id>com.eval.composite-build-manager</id>
     <name>Composite Build Manager</name>
-    <vendor>JDME</vendor>
+    <version>1.0.12</version>
+    <vendor>EVAL</vendor>
     <description><![CDATA[
         Composite Build Manager — Visualize and manage Android multi-module Composite Build configurations from a side panel in Android Studio.<br/><br/>
         Switch between LOCAL (source) and MAVEN (AAR) build modes per module with one click. Changes are written automatically and take effect on the next Gradle build.<br/><br/>
