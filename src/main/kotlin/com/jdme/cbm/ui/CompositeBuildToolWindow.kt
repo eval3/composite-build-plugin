@@ -25,5 +25,11 @@ class CompositeBuildToolWindow : ToolWindowFactory {
         })
     }
 
-    override fun shouldBeAvailable(project: Project) = true
+    override suspend fun isApplicableAsync(project: Project) = true
+
+    @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
+    override fun isApplicable(project: Project) = true
+
+    @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
+    override fun isDoNotActivateOnStart() = false
 }
