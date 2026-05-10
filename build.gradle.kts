@@ -1,4 +1,5 @@
 import org.jetbrains.intellij.platform.gradle.TestFrameworkType
+import java.util.Properties
 
 plugins {
     id("java")
@@ -21,25 +22,44 @@ repositories {
     }
 }
 
-val localAndroidStudioPath = "/Applications/Android Studio Preview.app/Contents"
-val isLocalBuild = file(localAndroidStudioPath).exists()
+val localProps = Properties().also { props ->
+    rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use(props::load)
+}
+
+val localAndroidStudioPath: String = localProps.getProperty("androidStudioPath")
+    ?: run {
+        val os = System.getProperty("os.name").lowercase()
+        when {
+            os.contains("mac") ->
+                File("/Applications").listFiles()
+                    ?.filter { it.name.startsWith("Android Studio") && it.name.endsWith(".app") }
+                    ?.map { "${it.absolutePath}/Contents" }
+                    ?.firstOrNull { File(it).exists() }
+
+            os.contains("win") ->
+                listOfNotNull(
+                    System.getenv("PROGRAMFILES")?.let { "$it\\Android\\Android Studio" },
+                    System.getenv("LOCALAPPDATA")?.let { "$it\\Programs\\Android Studio" },
+                ).firstOrNull { File(it).exists() }
+
+            else ->
+                listOf(
+                    "${System.getProperty("user.home")}/android-studio",
+                    "/opt/android-studio",
+                    "/usr/local/android-studio",
+                ).firstOrNull { File(it).exists() }
+        }
+    }
+    ?: error("Android Studio not found. Set androidStudioPath in local.properties")
 
 dependencies {
     intellijPlatform {
-        // 本地开发用本地 Android Studio；CI 环境自动下载指定版本
-        if (isLocalBuild) {
-            local(localAndroidStudioPath)
-        } else {
-            androidStudio(providers.gradleProperty("ciAndroidStudioVersion").get())
-        }
+        local(localAndroidStudioPath)
 
         // Required bundled plugins
         bundledPlugin("com.intellij.gradle")
         bundledPlugin("org.jetbrains.plugins.gradle")
-        // 使用 androidStudio() 下载时，org.jetbrains.android 是平台核心组件，无需单独声明
-        if (isLocalBuild) {
-            bundledPlugin("org.jetbrains.android")
-        }
+        bundledPlugin("org.jetbrains.android")
 
         pluginVerifier()
         zipSigner()

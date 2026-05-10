@@ -14,6 +14,9 @@ out/
 # Gradle Wrapper
 !gradle/wrapper/gradle-wrapper.jar
 
+# Local machine config (not committed)
+local.properties
+
 # OS
 .DS_Store
 Thumbs.db
