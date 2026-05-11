@@ -25,8 +25,7 @@ def getIncludedProjectNames = { File buildDir ->
 }
 
 gradle.settingsEvaluated { settings ->
-    def hash = Integer.toUnsignedString(settings.rootDir.absolutePath.hashCode(), 16)
-    File stateFile = new File(System.getProperty("user.home"), ".gradle/cbm/${hash}.json")
+    File stateFile = new File(settings.rootDir, ".idea/cbm/modules.json")
 
     if (!stateFile.exists()) return
 

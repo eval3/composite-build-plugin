@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.eval.cbm.model.ModuleConfig
 import com.eval.cbm.model.checkLocalDir
+import com.eval.cbm.model.resolveLocalDir
 import java.io.File
 
 /**
@@ -379,8 +380,10 @@ class CbmProjectService(private val project: Project) {
                 val comma = if (index < enabledList.size - 1) "," else ""
                 val flavorAware = latestFlavorMap[module.name] ?: module.flavorAware
                 val parts = mutableListOf("\"name\": \"${module.name}\"")
-                if (module.isCustom && module.customPath != null) {
-                    parts.add("\"path\": \"${module.customPath}\"")
+                // 始终写入 path，使用 resolveLocalDir 获取模块本地路径
+                val localDir = module.resolveLocalDir(projectRoot)
+                if (localDir != null) {
+                    parts.add("\"path\": \"${localDir.absolutePath}\"")
                 }
                 if (module.isCustom && module.customDeps.isNotEmpty()) {
                     parts.add("\"deps\": \"${com.eval.cbm.model.DepSubstitution.toCompactList(module.customDeps)}\"")
