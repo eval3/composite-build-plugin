@@ -64,15 +64,10 @@ dependencies {
         pluginVerifier()
         zipSigner()
         testFramework(TestFrameworkType.Platform)
+        plugin("com.intellij.mcpServer", "261.24374.39")
     }
 
     compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
-
-    // 编译期引用本机已安装的 MCP Server 插件 jar（运行时由 IDE 提供，不打包进发布产物）
-    val mcpJar = file("${System.getProperty("user.home")}/Library/Application Support/JetBrains/IdeaIC2025.2/plugins/mcpserver/lib/mcpserver.jar")
-    if (mcpJar.exists()) {
-        compileOnly(files(mcpJar))
-    }
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
