@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.eval.composite-build-manager</id>
     <name>Composite Build Manager</name>
-    <version>1.0.12</version>
+    <version>1.0.13</version>
     <vendor>EVAL</vendor>
     <description><![CDATA[
         Composite Build Manager — Visualize and manage Android multi-module Composite Build configurations from a side panel in Android Studio.<br/><br/>
@@ -23,12 +23,18 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        <h3>1.0.12</h3>
         <b>New Features</b>
         <ul>
-          <li>Added internationalization support and resource file refactoring</li>
-          <li>Added project configuration feature and UI refactoring</li>
-          <li>Config file supports <code>path</code> field to specify local path instead of the default convention</li>
+          <li>Added JetBrains IDE MCP server support to expose composite build components as MCP tools</li>
+          <li>Added English and Chinese promotional images</li>
+          <li>Updated composite_build icon with dark theme support</li>
+        </ul>
+        <b>Bug Fixes</b>
+        <ul>
+          <li>Refactored CBM state file storage to .idea/cbm directory</li>
+          <li>Fixed MCP jar local reference and reorganized config blocks</li>
+          <li>Implemented dynamic Android Studio path detection via local.properties</li>
+          <li>Fixed filter checkbox greying/clickability when MAVEN count is zero</li>
         </ul>
     ]]></change-notes>
 
