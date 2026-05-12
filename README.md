@@ -57,13 +57,48 @@ The artifact is located at: `build/distributions/composite-build-plugin-*.zip`
 3. Check/uncheck module checkboxes to toggle LOCAL / MAVEN mode
 4. Click the **⟳ Sync Gradle** button to sync Gradle
 
+## Recommended Claude Code Configuration
+
+> **Prerequisites:** If your IDE doesn't have MCP Server built-in, first install the MCP Server plugin from the plugin marketplace, enable it, and then configure the corresponding Agent.
+
+When using [Claude Code](https://claude.ai/code) to work with this project, add the following hooks to `.claude/settings.json` to enhance file search and code discovery:
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "mcp_tool",
+            "if": "Bash(find *)",
+            "tool": "mcp__jetbrains__find_files_by_name_keyword"
+          },
+          {
+            "type": "mcp_tool",
+            "if": "Bash(grep *)",
+            "tool": "mcp__jetbrains__search_in_files_by_text"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+**Benefits:**
+- Prevents missed files when searching across composite build components
+- Faster and more accurate file discovery powered by JetBrains IDE indexing
+
 ## File Overview
 
 | File | Role |
 |------|------|
 | Component config file (path configured in plugin settings) | Read-only: module registry (name, repo URL, flavorAware flag) |
 | `~/.gradle/init.d/cbm.gradle` | Gradle init script auto-deployed by the plugin; reads the state file and injects includeBuild config at build time |
-| `~/.gradle/cbm/<hash>.json` | State file written by the plugin; records which modules have composite build enabled; consumed by the init script at build time |
+| `.idea/cbm/modules.json` | State file written by the plugin in the project's .idea directory; records which modules have composite build enabled; consumed by the init script at build time |
+| `.idea/cbm/snapshots.json` | Snapshot file written by the plugin; stores LOCAL module snapshots and branch information per branch for quick recovery when switching branches |
 
 ## Config File Format
 
@@ -136,16 +171,17 @@ workspace/
 
 | Version | New Features | Bug Fixes |
 |---------|-------------|-----------|
-| 1.0.12 | Added internationalization support and resource file refactoring<br>Added project configuration feature and UI refactoring<br>Config file supports `path` field to specify local path instead of the default convention | — |
-| 1.0.11 | — | Fixed LocalBuildScanner logic for filtering app module<br>Hide line marker "+" when config file does not exist |
+| 1.0.13 | • Added JetBrains IDE MCP server support to expose composite build components as MCP tools<br>• Added English and Chinese promotional images<br>• Updated composite_build icon with dark theme support | • Refactored CBM state file storage to .idea/cbm directory<br>• Fixed MCP jar local reference and reorganized config blocks<br>• Implemented dynamic Android Studio path detection via local.properties<br>• Fixed filter checkbox greying/clickability when MAVEN count is zero |
+| 1.0.12 | • Added internationalization support and resource file refactoring<br>• Added project configuration feature and UI refactoring<br>• Config file supports `path` field to specify local path instead of the default convention | — |
+| 1.0.11 | — | • Fixed LocalBuildScanner logic for filtering app module<br>• Hide line marker "+" when config file does not exist |
 | 1.0.10 | — | Removed IncludeBuildWriter; composite build is now managed entirely by cbm.init.gradle |
-| 1.0.9 | Support resolving group:artifact from Version Catalog (libs.xxx)<br>Added dependency substitution rules and line markers for custom components | Fixed false positives when resolving Version Catalog dependencies<br>Improved error handling and user feedback when adding custom modules<br>Auto Gradle Sync on custom component deletion only when in LOCAL state<br>Auto-cancel CUSTOM filter after deleting a custom component |
-| 1.0.8 | Added CUSTOM filter and custom component deletion<br>Added manual local component addition with persistent path and composite build support | Fixed filter count not auto-unchecking and greying out when zero<br>Fixed header select-all checkbox not hidden in CUSTOM mode<br>Extended module key regex to support hyphens |
-| 1.0.7 | Added save/restore LOCAL module snapshot per branch | Fixed full branch refresh triggered when checking a module to LOCAL<br>Branch loading now only happens on init and Refresh button click |
-| 1.0.6 | Branch dialog retains origin/ prefix for remote branches<br>Branch list shows local branches first, then remote<br>Auto-create local tracking branch when switching to a remote branch<br>Show loading animation in branch column while refreshing LOCAL modules | Fixed branch name disappearing for MAVEN modules during branch refresh |
-| 1.0.5 | Support auto-generation of flavor dependencySubstitution<br>Added select-all checkbox in table header<br>Added LOCAL / MAVEN mutually exclusive filter at the bottom with status count | Fixed Sync Gradle button false-red after restart<br>Fixed dependency substitution issues for multiple flavorAware components<br>Fixed mutual interference between multiple enabled flavorAware components<br>Fixed config/usage being parsed as a module after the repositories block ends<br>Fixed Refresh button not reloading config file |
-| 1.0.4 | Allow MAVEN modules to switch branches<br>Show loading animation in checkbox position while downloading | Fixed status still showing LOCAL after local directory is deleted<br>Fixed branch list showing only one branch |
-| 1.0.3 | Show actual local Git branch<br>Support branch switching with uncommitted-change check<br>Adaptive branch column width with async caching<br>Sync button highlights when there are pending changes | Fixed deprecated API warnings<br>Fixed branch column minimum width too small<br>Changed default tool window width to 300 |
-| 1.0.2 | Added tool window icon<br>Auto-refresh toggle state when panel is shown<br>Show pending Sync reminder after config changes | Fixed pending Sync hint not disappearing after unchecking<br>Fixed unable to refresh state when tool window is collapsed/expanded<br>Removed plugin version upper limit for broader IDE compatibility |
-| 1.0.1 | Changed to manual Gradle Sync trigger | Fixed status column icon overflowing into checkbox column |
-| 1.0.0 | Initial release: visualize LOCAL / MAVEN / MISSING status<br>Toggle includeBuild and auto-write config<br>One-click Gradle Sync<br>Download missing modules | — |
+| 1.0.9 | • Support resolving group:artifact from Version Catalog (libs.xxx)<br>• Added dependency substitution rules and line markers for custom components | • Fixed false positives when resolving Version Catalog dependencies<br>• Improved error handling and user feedback when adding custom modules<br>• Auto Gradle Sync on custom component deletion only when in LOCAL state<br>• Auto-cancel CUSTOM filter after deleting a custom component |
+| 1.0.8 | • Added CUSTOM filter and custom component deletion<br>• Added manual local component addition with persistent path and composite build support | • Fixed filter count not auto-unchecking and greying out when zero<br>• Fixed header select-all checkbox not hidden in CUSTOM mode<br>• Extended module key regex to support hyphens |
+| 1.0.7 | • Added save/restore LOCAL module snapshot per branch | • Fixed full branch refresh triggered when checking a module to LOCAL<br>• Branch loading now only happens on init and Refresh button click |
+| 1.0.6 | • Branch dialog retains origin/ prefix for remote branches<br>• Branch list shows local branches first, then remote<br>• Auto-create local tracking branch when switching to a remote branch<br>• Show loading animation in branch column while refreshing LOCAL modules | • Fixed branch name disappearing for MAVEN modules during branch refresh |
+| 1.0.5 | • Support auto-generation of flavor dependencySubstitution<br>• Added select-all checkbox in table header<br>• Added LOCAL / MAVEN mutually exclusive filter at the bottom with status count | • Fixed Sync Gradle button false-red after restart<br>• Fixed dependency substitution issues for multiple flavorAware components<br>• Fixed mutual interference between multiple enabled flavorAware components<br>• Fixed config/usage being parsed as a module after the repositories block ends<br>• Fixed Refresh button not reloading config file |
+| 1.0.4 | • Allow MAVEN modules to switch branches<br>• Show loading animation in checkbox position while downloading | • Fixed status still showing LOCAL after local directory is deleted<br>• Fixed branch list showing only one branch |
+| 1.0.3 | • Show actual local Git branch<br>• Support branch switching with uncommitted-change check<br>• Adaptive branch column width with async caching<br>• Sync button highlights when there are pending changes | • Fixed deprecated API warnings<br>• Fixed branch column minimum width too small<br>• Changed default tool window width to 300 |
+| 1.0.2 | • Added tool window icon<br>• Auto-refresh toggle state when panel is shown<br>• Show pending Sync reminder after config changes | • Fixed pending Sync hint not disappearing after unchecking<br>• Fixed unable to refresh state when tool window is collapsed/expanded<br>• Removed plugin version upper limit for broader IDE compatibility |
+| 1.0.1 | • Changed to manual Gradle Sync trigger | • Fixed status column icon overflowing into checkbox column |
+| 1.0.0 | • Initial release: visualize LOCAL / MAVEN / MISSING status<br>• Toggle includeBuild and auto-write config<br>• One-click Gradle Sync<br>• Download missing modules | — |

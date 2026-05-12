@@ -57,13 +57,48 @@ cd composite-build-plugin/
 3. 勾选/取消勾选模块的复选框来切换 LOCAL / MAVEN 模式
 4. 点击 **⟳ Sync Gradle** 按钮同步 Gradle
 
+## Claude Code 推荐配置
+
+> **前置要求：** 如果当前 IDE 未内置 MCP Server，请先在插件市场安装 MCP Server 插件，然后 Enable 它，接着配置对应的 Agent。
+
+当使用 [Claude Code](https://claude.ai/code) 开发此项目时，建议在 `.claude/settings.json` 中添加以下 hooks 配置来增强文件搜索和代码发现能力：
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "mcp_tool",
+            "if": "Bash(find *)",
+            "tool": "mcp__jetbrains__find_files_by_name_keyword"
+          },
+          {
+            "type": "mcp_tool",
+            "if": "Bash(grep *)",
+            "tool": "mcp__jetbrains__search_in_files_by_text"
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+**好处：**
+- 在检索复合构建多个组件时，确保不会遗漏任何文件
+- 利用 JetBrains IDE 的索引能力，搜索更快更准确
+
 ## 文件关系
 
 | 文件 | 角色 |
 |------|------|
 | 组件配置文件（路径在插件设置中配置） | 只读：模块配置中心（模块名、仓库地址、flavorAware 标记） |
 | `~/.gradle/init.d/cbm.gradle` | 插件自动部署的 Gradle init script，负责读取状态文件并动态注入 includeBuild 配置 |
-| `~/.gradle/cbm/<hash>.json` | 插件写入的状态文件，记录当前哪些模块启用了复合构建，由 init script 在构建时读取 |
+| `.idea/cbm/modules.json` | 插件写入的状态文件，存储在工程的 .idea 目录中，记录当前哪些模块启用了复合构建，由 init script 在构建时读取 |
+| `.idea/cbm/snapshots.json` | 插件写入的快照文件，存储 LOCAL 模块的快照和按分支保存的分支信息，用于切换分支时快速恢复 |
 
 ## 组件配置文件格式说明
 
@@ -136,16 +171,17 @@ workspace/
 
 | 版本 | 新增功能 | Bug 修复 |
 |------|---------|---------|
-| 1.0.12 | 添加国际化支持和资源文件重构<br>添加项目配置功能并重构 UI<br>组件配置文件支持 `path` 字段，可指定本地路径替代默认约定路径 | — |
-| 1.0.11 | — | 修复 LocalBuildScanner 过滤 app module 的逻辑<br>在 project-repos.json5 不存在时不显示行标记加号 |
+| 1.0.13 | • 添加 JetBrains IDE MCP server 支持，暴露复合构建组件为 MCP tools<br>• 添加英文与中文宣传图<br>• 更新 composite_build 图标并添加暗色主题支持 | • CBM 状态文件存储位置重构至 .idea/cbm 目录<br>• 修复 MCP jar 本地引用并重新排列配置块<br>• 实现通过 local.properties 动态检测 Android Studio 路径<br>• 修复 MAVEN 过滤器数量为 0 时未置灰且可点击的问题 |
+| 1.0.12 | • 添加国际化支持和资源文件重构<br>• 添加项目配置功能并重构 UI<br>• 组件配置文件支持 `path` 字段，可指定本地路径替代默认约定路径 | — |
+| 1.0.11 | — | • 修复 LocalBuildScanner 过滤 app module 的逻辑<br>• 在 project-repos.json5 不存在时不显示行标记加号 |
 | 1.0.10 | — | 移除 IncludeBuildWriter，复合构建统一由 cbm.init.gradle 管理 |
-| 1.0.9 | 支持从 Version Catalog (libs.xxx) 解析依赖的 group:artifact<br>添加自定义组件的依赖替换规则和行标记功能 | 修复Version Catalog依赖解析时的false positive问题，避免在成员访问链和本地模块依赖上添加行标记<br>改进自定义模块添加功能的异常处理和用户反馈<br>删除自定义组件时，仅在 LOCAL 状态时才自动触发 Gradle Sync<br>自定义组件删除后自动取消 CUSTOM 筛选并展示所有组件 |
-| 1.0.8 | 新增 CUSTOM 筛选项及自定义组件删除功能<br>新增手动添加本地组件功能，支持自定义路径持久化及复合构建 | 修复筛选项数量为 0 时未自动取消勾选并置灰<br>修复 CUSTOM 模式下表头全选复选框未隐藏<br>扩展模块键名正则以支持连字符 |
-| 1.0.7 | 新增保存/恢复 LOCAL 模块快照功能，按分支存储，方便切换场景时一键恢复 | 修复勾选模块为 LOCAL 时触发全量分支刷新的问题<br>分支加载仅在初始化和点击 Refresh 按钮时触发 |
-| 1.0.6 | 分支弹窗保留远程分支 origin/ 前缀<br>分支列表优先展示本地分支，再展示远程分支<br>切换远程分支时自动创建同名本地跟踪分支，避免 detached HEAD<br>刷新分支时 LOCAL 模块分支列显示 loading 动画 | 修复刷新分支时 MAVEN 模块分支名消失 |
-| 1.0.5 | 支持 flavor dependencySubstitution 自动生成<br>表头添加全选复选框<br>底部增加 LOCAL / MAVEN 互斥筛选复选框，整合状态统计显示<br>优化分支弹窗交互 | 修复重启后 Sync Gradle 按钮误报红<br>修复 cbm.init.gradle 中多 flavorAware 组件的依赖替换问题<br>修复多 flavorAware 组件同时启用时 dependencySubstitution 互相干扰<br>修复 repositories 块结束后 config/usage 被误解析为模块<br>修复 Refresh 按钮未重新加载 project-repos.json5 |
-| 1.0.4 | 允许 MAVEN 状态的模块切换分支<br>下载模块时在复选框位置显示 loading 动画 | 修复删除本地目录后 Sync 时状态仍显示 LOCAL<br>修复分支列表只显示一个分支 |
-| 1.0.3 | 显示本地 Git 实际分支<br>支持分支切换（含未提交修改检查）<br>分支列宽自适应、异步缓存<br>Sync 按钮有改动时高亮提醒 | 修复废弃 API 及编译警告<br>修复分支列最小宽度过小<br>工具窗口默认宽度改为 300 |
-| 1.0.2 | 为插件添加工具窗口图标<br>面板显示时自动刷新勾选状态<br>配置变更后显示待 Sync 提醒 | 修复取消勾选后待 Sync 提示不消失<br>修复工具窗口收起展开时无法刷新勾选状态<br>移除插件版本上限限制以兼容更高版本 IDE |
-| 1.0.1 | 改为手动触发 Gradle Sync | 修复状态列图标溢出到复选框列 |
-| 1.0.0 | 初始版本：可视化模块 LOCAL / MAVEN / MISSING 状态<br>支持勾选切换 includeBuild 并自动写回配置<br>一键触发 Gradle Sync<br>支持下载缺失模块 | — |
+| 1.0.9 | • 支持从 Version Catalog (libs.xxx) 解析依赖的 group:artifact<br>• 添加自定义组件的依赖替换规则和行标记功能 | • 修复Version Catalog依赖解析时的false positive问题，避免在成员访问链和本地模块依赖上添加行标记<br>• 改进自定义模块添加功能的异常处理和用户反馈<br>• 删除自定义组件时，仅在 LOCAL 状态时才自动触发 Gradle Sync<br>• 自定义组件删除后自动取消 CUSTOM 筛选并展示所有组件 |
+| 1.0.8 | • 新增 CUSTOM 筛选项及自定义组件删除功能<br>• 新增手动添加本地组件功能，支持自定义路径持久化及复合构建 | • 修复筛选项数量为 0 时未自动取消勾选并置灰<br>• 修复 CUSTOM 模式下表头全选复选框未隐藏<br>• 扩展模块键名正则以支持连字符 |
+| 1.0.7 | • 新增保存/恢复 LOCAL 模块快照功能，按分支存储，方便切换场景时一键恢复 | • 修复勾选模块为 LOCAL 时触发全量分支刷新的问题<br>• 分支加载仅在初始化和点击 Refresh 按钮时触发 |
+| 1.0.6 | • 分支弹窗保留远程分支 origin/ 前缀<br>• 分支列表优先展示本地分支，再展示远程分支<br>• 切换远程分支时自动创建同名本地跟踪分支，避免 detached HEAD<br>• 刷新分支时 LOCAL 模块分支列显示 loading 动画 | • 修复刷新分支时 MAVEN 模块分支名消失 |
+| 1.0.5 | • 支持 flavor dependencySubstitution 自动生成<br>• 表头添加全选复选框<br>• 底部增加 LOCAL / MAVEN 互斥筛选复选框，整合状态统计显示<br>• 优化分支弹窗交互 | • 修复重启后 Sync Gradle 按钮误报红<br>• 修复 cbm.init.gradle 中多 flavorAware 组件的依赖替换问题<br>• 修复多 flavorAware 组件同时启用时 dependencySubstitution 互相干扰<br>• 修复 repositories 块结束后 config/usage 被误解析为模块<br>• 修复 Refresh 按钮未重新加载 project-repos.json5 |
+| 1.0.4 | • 允许 MAVEN 状态的模块切换分支<br>• 下载模块时在复选框位置显示 loading 动画 | • 修复删除本地目录后 Sync 时状态仍显示 LOCAL<br>• 修复分支列表只显示一个分支 |
+| 1.0.3 | • 显示本地 Git 实际分支<br>• 支持分支切换（含未提交修改检查）<br>• 分支列宽自适应、异步缓存<br>• Sync 按钮有改动时高亮提醒 | • 修复废弃 API 及编译警告<br>• 修复分支列最小宽度过小<br>• 工具窗口默认宽度改为 300 |
+| 1.0.2 | • 为插件添加工具窗口图标<br>• 面板显示时自动刷新勾选状态<br>• 配置变更后显示待 Sync 提醒 | • 修复取消勾选后待 Sync 提示不消失<br>• 修复工具窗口收起展开时无法刷新勾选状态<br>• 移除插件版本上限限制以兼容更高版本 IDE |
+| 1.0.1 | • 改为手动触发 Gradle Sync | • 修复状态列图标溢出到复选框列 |
+| 1.0.0 | • 初始版本：可视化模块 LOCAL / MAVEN / MISSING 状态<br>• 支持勾选切换 includeBuild 并自动写回配置<br>• 一键触发 Gradle Sync<br>• 支持下载缺失模块 | — |
