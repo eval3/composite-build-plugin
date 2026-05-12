@@ -26,7 +26,4 @@ class CompositeBuildToolWindow : ToolWindowFactory {
     }
 
     override suspend fun isApplicableAsync(project: Project) = true
-
-    @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
-    override fun isApplicable(project: Project) = true
 }
