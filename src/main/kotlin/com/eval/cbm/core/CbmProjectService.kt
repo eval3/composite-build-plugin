@@ -1,7 +1,5 @@
 package com.eval.cbm.core
 
-import com.android.tools.idea.gradle.project.sync.GradleSyncListenerWithRoot
-import com.android.tools.idea.gradle.project.sync.GradleSyncState
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.logger
@@ -35,18 +33,16 @@ class CbmProjectService(private val project: Project) {
             CbmInitScriptManager.deployInitScript()
             CbmInitScriptManager.migrateOldStateFile(projectRoot)
         }
-        GradleSyncState.subscribe(project, object : GradleSyncListenerWithRoot {
-            override fun syncStarted(project: Project, rootProjectPath: String) {
-                // 在 Gradle 进程启动前同步写入最新 flavor，确保 init script 读到正确值
-                if (_enabledModules.isEmpty()) return
-                try {
-                    saveEnabledModulesToStateFile()
-                    LOG.info("State file updated before Gradle sync started")
-                } catch (e: Exception) {
-                    LOG.error("Failed to update state file before sync", e)
-                }
+        GradleSyncListener.subscribe(project) { rootProjectPath ->
+            // 在 Gradle 进程启动前同步写入最新 flavor，确保 init script 读到正确值
+            if (_enabledModules.isEmpty()) return@subscribe
+            try {
+                saveEnabledModulesToStateFile()
+                LOG.info("State file updated before Gradle sync started")
+            } catch (e: Exception) {
+                LOG.error("Failed to update state file before sync", e)
             }
-        }, project)
+        }
     }
 
     private val projectRoot: File get() {
