@@ -57,8 +57,8 @@
 
         <!-- Tool Window：侧边面板 -->
         <toolWindow
-            id="Composite Build"
-            displayName="Composite Build"
+            id="Composite Build Manager"
+            displayName="Composite Build Manager"
             factoryClass="com.eval.cbm.ui.CompositeBuildToolWindow"
             anchor="right"
             icon="/icons/composite_build.svg"
@@ -96,7 +96,7 @@
         <!-- 右键菜单：切换构建模式 -->
         <group
             id="com.eval.cbm.CompositeBuildMenu"
-            text="Composite Build"
+            text="Composite Build Manager"
             popup="true">
             <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
 
