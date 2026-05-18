@@ -57,40 +57,6 @@ cd composite-build-plugin/
 3. 勾选/取消勾选模块的复选框来切换 LOCAL / MAVEN 模式
 4. 点击 **⟳ Sync Gradle** 按钮同步 Gradle
 
-## Claude Code 推荐配置
-
-> **前置要求：** 如果当前 IDE 未内置 MCP Server，请先在插件市场安装 MCP Server 插件，然后 Enable 它，接着配置对应的 Agent。
-
-当使用 [Claude Code](https://claude.ai/code) 开发此项目时，建议在 `.claude/settings.json` 中添加以下 hooks 配置来增强文件搜索和代码发现能力：
-
-```json
-{
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "mcp_tool",
-            "if": "Bash(find *)",
-            "tool": "mcp__jetbrains__find_files_by_name_keyword"
-          },
-          {
-            "type": "mcp_tool",
-            "if": "Bash(grep *)",
-            "tool": "mcp__jetbrains__search_in_files_by_text"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-**好处：**
-- 在检索复合构建多个组件时，确保不会遗漏任何文件
-- 利用 JetBrains IDE 的索引能力，搜索更快更准确
-
 ## 文件关系
 
 | 文件 | 角色 |

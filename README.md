@@ -57,40 +57,6 @@ The artifact is located at: `build/distributions/composite-build-plugin-*.zip`
 3. Check/uncheck module checkboxes to toggle LOCAL / MAVEN mode
 4. Click the **⟳ Sync Gradle** button to sync Gradle
 
-## Recommended Claude Code Configuration
-
-> **Prerequisites:** If your IDE doesn't have MCP Server built-in, first install the MCP Server plugin from the plugin marketplace, enable it, and then configure the corresponding Agent.
-
-When using [Claude Code](https://claude.ai/code) to work with this project, add the following hooks to `.claude/settings.json` to enhance file search and code discovery:
-
-```json
-{
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "mcp_tool",
-            "if": "Bash(find *)",
-            "tool": "mcp__jetbrains__find_files_by_name_keyword"
-          },
-          {
-            "type": "mcp_tool",
-            "if": "Bash(grep *)",
-            "tool": "mcp__jetbrains__search_in_files_by_text"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-**Benefits:**
-- Prevents missed files when searching across composite build components
-- Faster and more accurate file discovery powered by JetBrains IDE indexing
-
 ## File Overview
 
 | File | Role |
