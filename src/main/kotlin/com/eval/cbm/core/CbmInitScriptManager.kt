@@ -1,11 +1,13 @@
 package com.eval.cbm.core
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
+import org.jetbrains.plugins.gradle.settings.GradleSettings
 import java.io.File
 
 /**
  * 管理 CBM 的 Gradle 基础设施文件：
- * - ~/.gradle/init.d/cbm.gradle：Gradle init script，自动处理 includeBuild 配置
+ * - <Gradle User Home>/init.d/cbm.gradle：Gradle init script，自动处理 includeBuild 配置
  * - .idea/cbm/modules.json：工程状态文件（位于项目 .idea 目录下）
  * - .idea/cbm/snapshots.json：分支快照文件
  */
@@ -29,10 +31,43 @@ object CbmInitScriptManager {
     fun snapshotFileFor(projectRoot: File): File = File(cbmDir(projectRoot), "snapshots.json")
 
     /**
-     * 将插件 JAR 内的 cbm.init.gradle 部署到 ~/.gradle/init.d/cbm.gradle。
+     * 解析当前项目实际使用的 Gradle User Home。
+     *
+     * 优先级：Android Studio 项目设置 > gradle.user.home 系统属性
+     * > GRADLE_USER_HOME 环境变量 > ~/.gradle。
+     */
+    fun resolveGradleUserHome(project: Project): File = resolveGradleUserHome(
+        configuredPath = GradleSettings.getInstance(project).serviceDirectoryPath,
+        systemPropertyPath = System.getProperty("gradle.user.home"),
+        environmentPath = System.getenv("GRADLE_USER_HOME"),
+        userHome = System.getProperty("user.home")
+    )
+
+    internal fun resolveGradleUserHome(
+        configuredPath: String?,
+        systemPropertyPath: String?,
+        environmentPath: String?,
+        userHome: String
+    ): File {
+        val selectedPath = sequenceOf(configuredPath, systemPropertyPath, environmentPath)
+            .mapNotNull { it?.trim()?.takeIf(String::isNotEmpty) }
+            .firstOrNull()
+            ?: File(userHome, ".gradle").path
+
+        val expandedPath = when {
+            selectedPath == "~" -> userHome
+            selectedPath.startsWith("~/") || selectedPath.startsWith("~\\") ->
+                File(userHome, selectedPath.substring(2)).path
+            else -> selectedPath
+        }
+        return File(expandedPath).absoluteFile.toPath().normalize().toFile()
+    }
+
+    /**
+     * 将插件 JAR 内的 cbm.init.gradle 部署到当前 Gradle User Home 的 init.d/cbm.gradle。
      * 仅在内容变化时写入，避免触发不必要的 Gradle 缓存失效。
      */
-    fun deployInitScript() {
+    fun deployInitScript(project: Project) {
         try {
             val resource = CbmInitScriptManager::class.java
                 .getResourceAsStream(INIT_SCRIPT_RESOURCE)
@@ -41,7 +76,8 @@ object CbmInitScriptManager {
                     return
                 }
             val content = resource.use { it.readBytes() }
-            val targetDir = File(System.getProperty("user.home"), ".gradle/init.d")
+            val gradleUserHome = resolveGradleUserHome(project)
+            val targetDir = File(gradleUserHome, "init.d")
             targetDir.mkdirs()
             val targetFile = File(targetDir, INIT_SCRIPT_NAME)
             if (!targetFile.exists() || !targetFile.readBytes().contentEquals(content)) {

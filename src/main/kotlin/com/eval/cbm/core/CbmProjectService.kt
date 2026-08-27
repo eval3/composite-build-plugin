@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project
 import com.eval.cbm.model.ModuleConfig
 import com.eval.cbm.model.checkLocalDir
 import com.eval.cbm.model.resolveLocalDir
+import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import java.io.File
 
 /**
@@ -17,8 +18,8 @@ import java.io.File
  *
  * 存储结构：
  * - project-repos.json5：仅作为组件配置表（模块名、URL、branch）
- * - ~/.gradle/cbm/<hash>.json：插件状态文件，供 Gradle init script 读取
- * - ~/.gradle/init.d/cbm.gradle：Gradle init script，由插件自动部署和维护
+ * - .idea/cbm/modules.json：插件状态文件，供 Gradle init script 读取
+ * - <Gradle User Home>/init.d/cbm.gradle：Gradle init script，由插件自动部署和维护
  *
  * 工作原理：
  * - 加载时：解析 project-repos.json5 获取模块列表，从状态文件获取启用状态
@@ -32,9 +33,19 @@ class CbmProjectService(private val project: Project) {
 
     init {
         ApplicationManager.getApplication().executeOnPooledThread {
-            CbmInitScriptManager.deployInitScript()
+            CbmInitScriptManager.deployInitScript(project)
             CbmInitScriptManager.migrateOldStateFile(projectRoot)
         }
+        project.messageBus.connect(project).subscribe(
+            GradleSettingsListener.TOPIC,
+            object : GradleSettingsListener {
+                override fun onServiceDirectoryPathChange(oldPath: String?, newPath: String?) {
+                    ApplicationManager.getApplication().executeOnPooledThread {
+                        CbmInitScriptManager.deployInitScript(project)
+                    }
+                }
+            }
+        )
         GradleSyncState.subscribe(project, object : GradleSyncListenerWithRoot {
             override fun syncStarted(project: Project, rootProjectPath: String) {
                 if (_enabledModules.isEmpty()) return
@@ -66,7 +77,7 @@ class CbmProjectService(private val project: Project) {
             return File(projectRoot, "project-repos.json5")
         }
 
-    /** 当前工程的状态文件，位于 ~/.gradle/cbm/<hash>.json */
+    /** 当前工程的状态文件，位于 .idea/cbm/modules.json */
     val stateFile: File get() = CbmInitScriptManager.stateFileFor(projectRoot)
 
     private var _modules: MutableList<ModuleConfig> = mutableListOf()
