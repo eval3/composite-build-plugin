@@ -148,6 +148,7 @@ workspace/
 
 | 版本 | 新增功能 | Bug 修复 |
 |------|---------|---------|
+| 1.0.15 | • 支持识别 Android Studio 项目配置的 Gradle User Home<br>• 支持 `gradle.user.home`、`GRADLE_USER_HOME` 和默认 `~/.gradle` 的分级回退<br>• IDE 中 Gradle User Home 变更后自动重新部署 init script | • 修复自定义 Gradle User Home 时 `cbm.gradle` 被写入错误目录、导致 CBM 不生效的问题 |
 | 1.0.14 | • 支持显式配置 Maven `group:artifact` 到 included build 完整 Project Path 的映射<br>• 支持 `:feature:network` 等任意深度的 Gradle Project Path<br>• 通过 Gradle Tooling API 发现真实项目树，失败时回退到 Settings 文件扫描<br>• 状态文件改为结构化 substitutions，并兼容旧格式 | • 移除 Flavor 自动推导，统一使用确定性的显式替换规则<br>• 改进路径和依赖映射的 JSON 转义、格式校验与重复规则处理<br>• 避免 Gradle 项目扫描阻塞 IDE UI |
 | 1.0.13 | • 添加 JetBrains IDE MCP server 支持，暴露复合构建组件为 MCP tools<br>• 添加英文与中文宣传图<br>• 更新 composite_build 图标并添加暗色主题支持 | • CBM 状态文件存储位置重构至 .idea/cbm 目录<br>• 修复 MCP jar 本地引用并重新排列配置块<br>• 实现通过 local.properties 动态检测 Android Studio 路径<br>• 修复 MAVEN 过滤器数量为 0 时未置灰且可点击的问题 |
 | 1.0.12 | • 添加国际化支持和资源文件重构<br>• 添加项目配置功能并重构 UI<br>• 组件配置文件支持 `path` 字段，可指定本地路径替代默认约定路径 | — |

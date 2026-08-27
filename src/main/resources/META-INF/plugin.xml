@@ -1,7 +1,7 @@
 <idea-plugin>
     <id>com.eval.composite-build-manager</id>
     <name>Composite Build Manager</name>
-    <version>1.0.14</version>
+    <version>1.0.15</version>
     <vendor>EVAL</vendor>
     <description><![CDATA[
         Composite Build Manager — Visualize and manage Android multi-module Composite Build configurations from a side panel in Android Studio.<br/><br/>
@@ -23,16 +23,11 @@
     ]]></description>
 
     <change-notes><![CDATA[
-        <b>New Features</b>
+        <b>Improvements</b>
         <ul>
-          <li>Added explicit Maven coordinate to full included-build project path mappings</li>
-          <li>Added nested Gradle project discovery through the Tooling API with settings-file fallback</li>
-          <li>Added structured substitution state with legacy state-file compatibility</li>
-        </ul>
-        <b>Changes</b>
-        <ul>
-          <li>Removed flavor-aware inference in favor of deterministic explicit substitution rules</li>
-          <li>Improved JSON escaping and validation for component paths and dependency mappings</li>
+          <li>Deploys the CBM init script to the Gradle User Home configured for the current Android Studio project</li>
+          <li>Supports gradle.user.home, GRADLE_USER_HOME, and the default ~/.gradle fallback</li>
+          <li>Automatically redeploys the init script when the IDE Gradle User Home setting changes</li>
         </ul>
     ]]></change-notes>
 
