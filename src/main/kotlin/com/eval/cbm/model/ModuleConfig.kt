@@ -32,9 +32,9 @@ data class DepSubstitution(val dep: String, val project: String) {
  * @param url              Git 仓库地址
  * @param includeBuild     是否启用复合构建（对应 JSON5 中的 includeBuild 字段）
  * @param localDirExists   运行时检测：本地目录是否存在
- * @param flavorAware      是否需要跟随主工程变种做 dependencySubstitution（对应 JSON5 的 flavorAware 字段）
  * @param isCustom         是否为手动添加的自定义组件（不来自 project-repos.json5）
  * @param customPath       自定义组件的绝对路径（isCustom=true 时有效）
+ * @param substitutions    Maven group:artifact 到完整 Gradle project path 的显式替换规则
  * @param configPath       配置文件中通过 path 字段指定的本地路径（优先于约定路径）
  */
 data class ModuleConfig(
@@ -42,10 +42,9 @@ data class ModuleConfig(
     val url: String,
     var includeBuild: Boolean,
     val localDirExists: Boolean,
-    val flavorAware: Boolean = false,
     val isCustom: Boolean = false,
     val customPath: String? = null,
-    val customDeps: List<DepSubstitution> = emptyList(),
+    val substitutions: List<DepSubstitution> = emptyList(),
     val configPath: String? = null
 ) {
     /** 模块本地目录名：约定为 moduleName_project，位于主工程父目录 */

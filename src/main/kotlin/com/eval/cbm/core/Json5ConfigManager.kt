@@ -38,8 +38,9 @@ object Json5ConfigManager {
     private val PATH_RE = Regex("""^\s*"path"\s*:\s*"([^"]+)"""")
     // 匹配 includeBuild 字段
     private val INCLUDE_BUILD_RE = Regex("""^\s*"includeBuild"\s*:\s*(true|false)""")
-    // 匹配 flavorAware 字段
-    private val FLAVOR_RE = Regex("""^\s*"flavorAware"\s*:\s*(true|false)""")
+    private val SUBSTITUTIONS_START_RE = Regex("""^\s*"substitutions"\s*:\s*\[""")
+    private val SUB_MODULE_RE = Regex(""""module"\s*:\s*"([^"]+)""")
+    private val SUB_PROJECT_RE = Regex(""""project"\s*:\s*"([^"]+)""")
     // 匹配块结束行（考虑 trailing comma）
     private val BLOCK_END_RE = Regex("""^\s*},?\s*(//.+)?$""")
     // 匹配 "repositories": { 行
@@ -66,7 +67,11 @@ object Json5ConfigManager {
         var currentUrl = ""
         var currentPath: String? = null
         var currentIncludeBuild = false
-        var currentFlavor = false
+        var currentSubstitutions = mutableListOf<com.eval.cbm.model.DepSubstitution>()
+        var currentSubModule: String? = null
+        var currentSubProject: String? = null
+        var inSubstitutions = false
+        var moduleBraceDepth = 0
 
         for (line in lines) {
             // 跳过注释行
@@ -87,7 +92,11 @@ object Json5ConfigManager {
                 currentUrl = ""
                 currentPath = null
                 currentIncludeBuild = false
-                currentFlavor = false
+                currentSubstitutions = mutableListOf()
+                currentSubModule = null
+                currentSubProject = null
+                inSubstitutions = false
+                moduleBraceDepth = 0
                 return@let
             }
 
@@ -101,12 +110,28 @@ object Json5ConfigManager {
             URL_RE.find(line)?.let { currentUrl = it.groupValues[1] }
             PATH_RE.find(line)?.let { currentPath = it.groupValues[1] }
             INCLUDE_BUILD_RE.find(line)?.let { currentIncludeBuild = it.groupValues[1] == "true" }
-            FLAVOR_RE.find(line)?.let { currentFlavor = it.groupValues[1] == "true" }
+
+            if (SUBSTITUTIONS_START_RE.containsMatchIn(line)) inSubstitutions = true
+            if (inSubstitutions) {
+                SUB_MODULE_RE.find(line)?.let { currentSubModule = it.groupValues[1] }
+                SUB_PROJECT_RE.find(line)?.let { currentSubProject = normalizeProjectPath(it.groupValues[1]) }
+                if (currentSubModule != null && currentSubProject != null) {
+                    currentSubstitutions += com.eval.cbm.model.DepSubstitution(
+                        currentSubModule,
+                        currentSubProject
+                    )
+                    currentSubModule = null
+                    currentSubProject = null
+                }
+                if (line.substringBefore("//").contains(']')) inSubstitutions = false
+            }
+
+            moduleBraceDepth += braceDelta(line)
 
             // 检测模块块结束
-            if (BLOCK_END_RE.matches(line)) {
+            if (moduleBraceDepth == 0) {
                 @Suppress("SENSELESS_COMPARISON")
-                val name = currentName!! // currentName 已在前面检查非空
+                val name = currentName // currentName 已在前面检查非空
                 val localExists = if (currentPath != null) File(currentPath).exists()
                                   else checkLocalDirExists(projectRoot, name)
                 modules += ModuleConfig(
@@ -114,7 +139,7 @@ object Json5ConfigManager {
                     url = currentUrl,
                     includeBuild = currentIncludeBuild,
                     localDirExists = localExists,
-                    flavorAware = currentFlavor,
+                    substitutions = sanitizeSubstitutions(name, currentSubstitutions),
                     configPath = currentPath
                 )
                 currentName = null
@@ -137,6 +162,7 @@ object Json5ConfigManager {
         val lines = configFile.readLines().toMutableList()
         var inTargetModule = false
         var moduleFound = false
+        var moduleDepth = 0
         val targetModuleRe = Regex("""^\s*"${Regex.escape(moduleName)}"\s*:\s*\{""")
 
         for (i in lines.indices) {
@@ -146,6 +172,7 @@ object Json5ConfigManager {
                 if (targetModuleRe.containsMatchIn(line)) {
                     inTargetModule = true
                     moduleFound = true
+                    moduleDepth = braceDelta(line)
                 }
                 continue
             }
@@ -161,8 +188,9 @@ object Json5ConfigManager {
                 break
             }
 
-            // 遇到块结束，说明该模块没有 includeBuild 字段
-            if (BLOCK_END_RE.matches(line)) {
+            moduleDepth += braceDelta(line)
+            // 遇到目标模块块结束，说明该模块没有 includeBuild 字段
+            if (moduleDepth == 0) {
                 LOG.warn("Module $moduleName has no includeBuild field")
                 break
             }
@@ -182,5 +210,55 @@ object Json5ConfigManager {
     private fun checkLocalDirExists(projectRoot: File, moduleName: String): Boolean {
         val parentDir = projectRoot.parentFile ?: return false
         return File(parentDir, "${moduleName}_project").exists()
+    }
+
+    private fun normalizeProjectPath(path: String): String =
+        if (path.startsWith(":")) path else ":$path"
+
+    private fun sanitizeSubstitutions(
+        moduleName: String,
+        rules: List<com.eval.cbm.model.DepSubstitution>
+    ): List<com.eval.cbm.model.DepSubstitution> {
+        val seenModules = mutableSetOf<String>()
+        return rules.filter { rule ->
+            val depParts = rule.dep.split(':')
+            val valid = depParts.size == 2 && depParts.all { Regex("""^[\w.-]+$""").matches(it) } &&
+                Regex("""^:(?:[\w.-]+)(?::[\w.-]+)*$""").matches(rule.project)
+            when {
+                !valid -> {
+                    LOG.warn("Ignoring invalid substitution in $moduleName: ${rule.dep} -> ${rule.project}")
+                    false
+                }
+                !seenModules.add(rule.dep) -> {
+                    LOG.warn("Ignoring duplicate substitution module in $moduleName: ${rule.dep}")
+                    false
+                }
+                else -> true
+            }
+        }
+    }
+
+    private fun braceDelta(line: String): Int {
+        var delta = 0
+        var quoted = false
+        var escaped = false
+        var i = 0
+        while (i < line.length) {
+            val c = line[i]
+            if (!quoted && c == '/' && i + 1 < line.length && line[i + 1] == '/') break
+            if (quoted) {
+                if (escaped) escaped = false
+                else if (c == '\\') escaped = true
+                else if (c == '"') quoted = false
+            } else {
+                when (c) {
+                    '"' -> quoted = true
+                    '{' -> delta++
+                    '}' -> delta--
+                }
+            }
+            i++
+        }
+        return delta
     }
 }

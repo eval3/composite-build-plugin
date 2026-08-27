@@ -37,9 +37,9 @@ class CbmProjectService(private val project: Project) {
         }
         GradleSyncState.subscribe(project, object : GradleSyncListenerWithRoot {
             override fun syncStarted(project: Project, rootProjectPath: String) {
-                // 在 Gradle 进程启动前同步写入最新 flavor，确保 init script 读到正确值
                 if (_enabledModules.isEmpty()) return
                 try {
+                    // Sync 前刷新显式 substitution 配置，确保 init script 使用最新映射。
                     saveEnabledModulesToStateFile()
                     LOG.info("State file updated before Gradle sync started")
                 } catch (e: Exception) {
@@ -295,46 +295,16 @@ class CbmProjectService(private val project: Project) {
         }
 
         return try {
-            val content = file.readText()
-
-            // 加载自定义组件：customModules 数组
-            val customModulesRe = Regex(""""customModules"\s*:\s*\[([\s\S]*?)\]""")
-            val customMatch = customModulesRe.find(content)
-            if (customMatch != null) {
-                val entryRe = Regex(""""name"\s*:\s*"([^"]+)"[^}]*"path"\s*:\s*"([^"]+)"""")
-                _customModuleEntries = entryRe.findAll(customMatch.groupValues[1])
-                    .associate { it.groupValues[1] to it.groupValues[2] }
-                    .toMutableMap()
-                val depsRe = Regex(""""name"\s*:\s*"([^"]+)"[^}]*"deps"\s*:\s*"([^"]+)"""")
-                _customModuleDeps = depsRe.findAll(customMatch.groupValues[1])
-                    .associate { m ->
-                        m.groupValues[1] to com.eval.cbm.model.DepSubstitution.parseList(m.groupValues[2])
-                    }
-                    .toMutableMap()
-                LOG.info("Loaded ${_customModuleEntries.size} custom modules from state file")
-            }
-
-            // 新格式：从 modules 数组中提取 name 字段
-            val modulesArrayRe = Regex(""""modules"\s*:\s*\[([\s\S]*?)\]""")
-            val modulesMatch = modulesArrayRe.find(content)
-            if (modulesMatch != null) {
-                val nameRe = Regex(""""name"\s*:\s*"([^"]+)"""")
-                return nameRe.findAll(modulesMatch.groupValues[1])
-                    .map { it.groupValues[1] }
-                    .toSet()
-            }
-
-            // 旧格式兼容：enabledModules 数组
-            val legacyRe = Regex(""""enabledModules"\s*:\s*\[([\s\S]*?)\]""")
-            val legacyMatch = legacyRe.find(content)
-            if (legacyMatch != null) {
-                val arrayContent = legacyMatch.groupValues[1]
-                if (arrayContent.isBlank()) return emptySet()
-                val moduleRe = Regex("\"([^\"]+)\"")
-                return moduleRe.findAll(arrayContent).map { it.groupValues[1] }.toSet()
-            }
-
-            emptySet()
+            val state = CbmStateCodec.decode(file.readText())
+            _customModuleEntries = state.customModules
+                .associate { it.name to it.path }
+                .toMutableMap()
+            _customModuleDeps = state.customModules
+                .filter { it.substitutions.isNotEmpty() }
+                .associate { it.name to it.substitutions }
+                .toMutableMap()
+            LOG.info("Loaded ${_customModuleEntries.size} custom modules from state file")
+            state.modules.map { it.name }.toSet()
         } catch (e: Exception) {
             LOG.error("Failed to parse state file", e)
             emptySet()
@@ -342,15 +312,14 @@ class CbmProjectService(private val project: Project) {
     }
 
     /**
-     * 将启用状态保存到 .cbm-include-build.json（新格式）。
+     * 将启用状态保存到 .idea/cbm/modules.json（结构化 substitutions 格式）。
      *
      * 新格式：
      * {
-     *   "groupId": "com.example",
-     *   "productFlavors": ["me", "global"],
      *   "modules": [
      *     { "name": "jm_common", "path": "../jm_common_project" },
-     *     { "name": "jm_web_impl", "path": "../jm_web_impl_project", "flavorAware": true }
+     *     { "name": "jm_web_impl", "path": "../jm_web_impl_project",
+     *       "substitutions": [{ "module": "com.example:web", "project": ":feature:web" }] }
      *   ],
      *   "updatedAt": "..."
      * }
@@ -359,62 +328,35 @@ class CbmProjectService(private val project: Project) {
         val file = stateFile
         LOG.info("Attempting to save state file to: ${file.absolutePath}")
         try {
-            val groupId = ProjectInfoReader.readGroupId(projectRoot) ?: ""
-            val activeFlavor = BuildVariantReader.getActiveFlavor(project)
-
-            // 每次保存前从 JSON5 重新读取 flavorAware，避免用户修改配置后内存未刷新
-            val latestFlavorMap = if (configFile.exists()) {
-                Json5ConfigManager.load(configFile, projectRoot).associate { it.name to it.flavorAware }
+            // 每次保存前重新读取配置，避免用户修改规则后内存未刷新
+            val latestConfig = if (configFile.exists()) {
+                Json5ConfigManager.load(configFile, projectRoot).associateBy { it.name }
             } else emptyMap()
 
             val enabledList = _modules.filter { _enabledModules.contains(it.name) }
 
-            val sb = StringBuilder()
-            sb.appendLine("{")
-            sb.appendLine("  \"groupId\": \"$groupId\",")
-            sb.appendLine("  \"activeFlavor\": \"${activeFlavor ?: ""}\",")
-
-            // modules 数组
-            sb.appendLine("  \"modules\": [")
-            enabledList.forEachIndexed { index, module ->
-                val comma = if (index < enabledList.size - 1) "," else ""
-                val flavorAware = latestFlavorMap[module.name] ?: module.flavorAware
-                val parts = mutableListOf("\"name\": \"${module.name}\"")
-                // 始终写入 path，使用 resolveLocalDir 获取模块本地路径
-                val localDir = module.resolveLocalDir(projectRoot)
-                if (localDir != null) {
-                    parts.add("\"path\": \"${localDir.absolutePath}\"")
-                }
-                if (module.isCustom && module.customDeps.isNotEmpty()) {
-                    parts.add("\"deps\": \"${com.eval.cbm.model.DepSubstitution.toCompactList(module.customDeps)}\"")
-                }
-                if (flavorAware) {
-                    parts.add("\"flavorAware\": true")
-                }
-                sb.appendLine("    { ${parts.joinToString(", ")} }$comma")
+            val stateModules = enabledList.map { module ->
+                val latest = latestConfig[module.name]
+                CbmStateModule(
+                    name = module.name,
+                    path = module.resolveLocalDir(projectRoot)?.absolutePath.orEmpty(),
+                    substitutions = latest?.substitutions ?: module.substitutions
+                )
             }
-            sb.appendLine("  ],")
-
-            // customModules 数组（手动添加的组件）
-            if (_customModuleEntries.isNotEmpty()) {
-                sb.appendLine("  \"customModules\": [")
-                val customEntries = _customModuleEntries.entries.toList()
-                customEntries.forEachIndexed { index, (name, path) ->
-                    val comma = if (index < customEntries.size - 1) "," else ""
-                    val deps = _customModuleDeps[name]
-                    val depsPart = if (!deps.isNullOrEmpty())
-                        ", \"deps\": \"${com.eval.cbm.model.DepSubstitution.toCompactList(deps)}\""
-                    else ""
-                    sb.appendLine("    { \"name\": \"$name\", \"path\": \"$path\"$depsPart }$comma")
-                }
-                sb.appendLine("  ],")
+            val customModules = _customModuleEntries.map { (name, path) ->
+                CbmStateModule(
+                    name = name,
+                    path = path,
+                    substitutions = _customModuleDeps[name].orEmpty()
+                )
             }
-
-            sb.appendLine("  \"updatedAt\": \"${java.time.LocalDateTime.now()}\"")
-            sb.appendLine("}")
-
-            file.writeText(sb.toString())
-            LOG.info("Saved ${enabledList.size} modules to state file (groupId=$groupId, activeFlavor=$activeFlavor)")
+            val state = CbmState(
+                modules = stateModules,
+                customModules = customModules,
+                updatedAt = java.time.LocalDateTime.now().toString()
+            )
+            file.writeText(CbmStateCodec.encode(state))
+            LOG.info("Saved ${enabledList.size} modules to state file")
         } catch (e: Exception) {
             LOG.error("Failed to save state file", e)
             throw e
@@ -470,7 +412,7 @@ class CbmProjectService(private val project: Project) {
                         localDirExists = java.io.File(path).exists(),
                         isCustom = true,
                         customPath = path,
-                        customDeps = _customModuleDeps[name] ?: emptyList()
+                        substitutions = _customModuleDeps[name] ?: emptyList()
                     )
                 }
 
@@ -536,7 +478,7 @@ class CbmProjectService(private val project: Project) {
             localDirExists = File(path).exists(),
             isCustom = true,
             customPath = path,
-            customDeps = deps
+            substitutions = deps
         )
         _modules.add(newModule)
 

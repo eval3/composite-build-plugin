@@ -61,7 +61,7 @@ cd composite-build-plugin/
 
 | 文件 | 角色 |
 |------|------|
-| 组件配置文件（路径在插件设置中配置） | 只读：模块配置中心（模块名、仓库地址、flavorAware 标记） |
+| 组件配置文件（路径在插件设置中配置） | 只读：模块配置中心（模块名、仓库地址、本地路径及依赖替换规则） |
 | `~/.gradle/init.d/cbm.gradle` | 插件自动部署的 Gradle init script，负责读取状态文件并动态注入 includeBuild 配置 |
 | `.idea/cbm/modules.json` | 插件写入的状态文件，存储在工程的 .idea 目录中，记录当前哪些模块启用了复合构建，由 init script 在构建时读取 |
 | `.idea/cbm/snapshots.json` | 插件写入的快照文件，存储 LOCAL 模块的快照和按分支保存的分支信息，用于切换分支时快速恢复 |
@@ -91,7 +91,7 @@ cd composite-build-plugin/
 |------|------|------|------|
 | `url` | String | 是 | 子模块 Git 仓库的 SSH 地址，点击「↓ 下载」时用于 `git clone` |
 | `path` | String | 否 | 本地目录的绝对路径；设置后以此路径读取组件，忽略默认的 `../<模块名>_project` 约定 |
-| `flavorAware` | Boolean | 否 | 为 `true` 时，插件会为该模块生成 flavor 维度的依赖替换规则（默认 `false`）|
+| `substitutions` | Array | 否 | 显式声明 Maven `group:artifact` 到 included build 完整 project path 的映射 |
 
 ### 本地目录约定
 
@@ -119,14 +119,25 @@ workspace/
       "path": "/Users/dev/projects/jm_common",
     },
 
-    // flavorAware 模块：需要按 flavor 生成依赖替换规则
-    "jm_manto": {
-      "url": "xxx:xx/manto_project.git",
-      "flavorAware": true
+    // 显式替换：适用于嵌套 project path、artifactId 与 project 名不同等场景
+    "jm_network": {
+      "url": "xxx:xx/network_project.git",
+      "substitutions": [
+        {
+          "module": "com.example:network",
+          "project": ":feature:network",
+        },
+        {
+          "module": "com.example:network-api",
+          "project": ":feature:network-api",
+        },
+      ],
     },
   }
 }
 ```
+
+`project` 必须是 included build 中的完整 Gradle project path（例如 `:feature:network`）。插件添加自定义组件时会优先通过 Gradle Tooling API 读取真实项目树；目标构建暂时无法配置时，再回退到 `settings.gradle(.kts)` 文本扫描。
 
 ## 兼容性
 
@@ -145,7 +156,7 @@ workspace/
 | 1.0.8 | • 新增 CUSTOM 筛选项及自定义组件删除功能<br>• 新增手动添加本地组件功能，支持自定义路径持久化及复合构建 | • 修复筛选项数量为 0 时未自动取消勾选并置灰<br>• 修复 CUSTOM 模式下表头全选复选框未隐藏<br>• 扩展模块键名正则以支持连字符 |
 | 1.0.7 | • 新增保存/恢复 LOCAL 模块快照功能，按分支存储，方便切换场景时一键恢复 | • 修复勾选模块为 LOCAL 时触发全量分支刷新的问题<br>• 分支加载仅在初始化和点击 Refresh 按钮时触发 |
 | 1.0.6 | • 分支弹窗保留远程分支 origin/ 前缀<br>• 分支列表优先展示本地分支，再展示远程分支<br>• 切换远程分支时自动创建同名本地跟踪分支，避免 detached HEAD<br>• 刷新分支时 LOCAL 模块分支列显示 loading 动画 | • 修复刷新分支时 MAVEN 模块分支名消失 |
-| 1.0.5 | • 支持 flavor dependencySubstitution 自动生成<br>• 表头添加全选复选框<br>• 底部增加 LOCAL / MAVEN 互斥筛选复选框，整合状态统计显示<br>• 优化分支弹窗交互 | • 修复重启后 Sync Gradle 按钮误报红<br>• 修复 cbm.init.gradle 中多 flavorAware 组件的依赖替换问题<br>• 修复多 flavorAware 组件同时启用时 dependencySubstitution 互相干扰<br>• 修复 repositories 块结束后 config/usage 被误解析为模块<br>• 修复 Refresh 按钮未重新加载 project-repos.json5 |
+| 1.0.5 | • 表头添加全选复选框<br>• 底部增加 LOCAL / MAVEN 互斥筛选复选框，整合状态统计显示<br>• 优化分支弹窗交互 | • 修复重启后 Sync Gradle 按钮误报红<br>• 修复 repositories 块结束后 config/usage 被误解析为模块<br>• 修复 Refresh 按钮未重新加载 project-repos.json5 |
 | 1.0.4 | • 允许 MAVEN 状态的模块切换分支<br>• 下载模块时在复选框位置显示 loading 动画 | • 修复删除本地目录后 Sync 时状态仍显示 LOCAL<br>• 修复分支列表只显示一个分支 |
 | 1.0.3 | • 显示本地 Git 实际分支<br>• 支持分支切换（含未提交修改检查）<br>• 分支列宽自适应、异步缓存<br>• Sync 按钮有改动时高亮提醒 | • 修复废弃 API 及编译警告<br>• 修复分支列最小宽度过小<br>• 工具窗口默认宽度改为 300 |
 | 1.0.2 | • 为插件添加工具窗口图标<br>• 面板显示时自动刷新勾选状态<br>• 配置变更后显示待 Sync 提醒 | • 修复取消勾选后待 Sync 提示不消失<br>• 修复工具窗口收起展开时无法刷新勾选状态<br>• 移除插件版本上限限制以兼容更高版本 IDE |

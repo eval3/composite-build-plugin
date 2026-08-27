@@ -70,6 +70,8 @@ dependencies {
     compileOnly("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
 
     testImplementation("org.junit.jupiter:junit-jupiter:5.10.0")
+    // IntelliJ's JUnit 5 session listener still references junit.framework.TestCase.
+    testImplementation("junit:junit:4.13.2")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

@@ -61,7 +61,7 @@ The artifact is located at: `build/distributions/composite-build-plugin-*.zip`
 
 | File | Role |
 |------|------|
-| Component config file (path configured in plugin settings) | Read-only: module registry (name, repo URL, flavorAware flag) |
+| Component config file (path configured in plugin settings) | Read-only: module registry (name, repo URL, local path, and dependency substitution rules) |
 | `~/.gradle/init.d/cbm.gradle` | Gradle init script auto-deployed by the plugin; reads the state file and injects includeBuild config at build time |
 | `.idea/cbm/modules.json` | State file written by the plugin in the project's .idea directory; records which modules have composite build enabled; consumed by the init script at build time |
 | `.idea/cbm/snapshots.json` | Snapshot file written by the plugin; stores LOCAL module snapshots and branch information per branch for quick recovery when switching branches |
@@ -91,7 +91,7 @@ Each key corresponds to an entry in the `[libraries]` section of `gradle/libs.ve
 |-------|------|----------|-------------|
 | `url` | String | Yes | SSH URL of the submodule Git repository; used for `git clone` when downloading |
 | `path` | String | No | Absolute path to the local directory; when set, the plugin uses this path instead of the default `../<moduleName>_project` convention |
-| `flavorAware` | Boolean | No | When `true`, the plugin generates flavor-aware dependency substitution rules (default: `false`) |
+| `substitutions` | Array | No | Explicit Maven `group:artifact` to full included-build project-path mappings |
 
 ### Local directory convention
 
@@ -119,14 +119,25 @@ workspace/
       "path": "/Users/dev/projects/jm_common",
     },
 
-    // flavorAware module: generates flavor-dimension dependency substitution rules
-    "jm_manto": {
-      "url": "xxx:xx/manto_project.git",
-      "flavorAware": true
+    // Explicit mapping for nested project paths or differing artifact/project names
+    "jm_network": {
+      "url": "xxx:xx/network_project.git",
+      "substitutions": [
+        {
+          "module": "com.example:network",
+          "project": ":feature:network",
+        },
+        {
+          "module": "com.example:network-api",
+          "project": ":feature:network-api",
+        },
+      ],
     },
   }
 }
 ```
+
+`project` must be the full Gradle project path inside the included build, such as `:feature:network`. When adding a custom component, the plugin first discovers the real project tree through the Gradle Tooling API and falls back to scanning `settings.gradle(.kts)` if the target build cannot currently be configured.
 
 ## Compatibility
 
@@ -145,7 +156,7 @@ workspace/
 | 1.0.8 | • Added CUSTOM filter and custom component deletion<br>• Added manual local component addition with persistent path and composite build support | • Fixed filter count not auto-unchecking and greying out when zero<br>• Fixed header select-all checkbox not hidden in CUSTOM mode<br>• Extended module key regex to support hyphens |
 | 1.0.7 | • Added save/restore LOCAL module snapshot per branch | • Fixed full branch refresh triggered when checking a module to LOCAL<br>• Branch loading now only happens on init and Refresh button click |
 | 1.0.6 | • Branch dialog retains origin/ prefix for remote branches<br>• Branch list shows local branches first, then remote<br>• Auto-create local tracking branch when switching to a remote branch<br>• Show loading animation in branch column while refreshing LOCAL modules | • Fixed branch name disappearing for MAVEN modules during branch refresh |
-| 1.0.5 | • Support auto-generation of flavor dependencySubstitution<br>• Added select-all checkbox in table header<br>• Added LOCAL / MAVEN mutually exclusive filter at the bottom with status count | • Fixed Sync Gradle button false-red after restart<br>• Fixed dependency substitution issues for multiple flavorAware components<br>• Fixed mutual interference between multiple enabled flavorAware components<br>• Fixed config/usage being parsed as a module after the repositories block ends<br>• Fixed Refresh button not reloading config file |
+| 1.0.5 | • Added select-all checkbox in table header<br>• Added LOCAL / MAVEN mutually exclusive filter at the bottom with status count | • Fixed Sync Gradle button false-red after restart<br>• Fixed config/usage being parsed as a module after the repositories block ends<br>• Fixed Refresh button not reloading config file |
 | 1.0.4 | • Allow MAVEN modules to switch branches<br>• Show loading animation in checkbox position while downloading | • Fixed status still showing LOCAL after local directory is deleted<br>• Fixed branch list showing only one branch |
 | 1.0.3 | • Show actual local Git branch<br>• Support branch switching with uncommitted-change check<br>• Adaptive branch column width with async caching<br>• Sync button highlights when there are pending changes | • Fixed deprecated API warnings<br>• Fixed branch column minimum width too small<br>• Changed default tool window width to 300 |
 | 1.0.2 | • Added tool window icon<br>• Auto-refresh toggle state when panel is shown<br>• Show pending Sync reminder after config changes | • Fixed pending Sync hint not disappearing after unchecking<br>• Fixed unable to refresh state when tool window is collapsed/expanded<br>• Removed plugin version upper limit for broader IDE compatibility |

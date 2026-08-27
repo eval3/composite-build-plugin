@@ -89,7 +89,7 @@ class DepSelectionDialog(
 
         // 更新每个 radio button：已添加的置灰+选中，未添加的启用+不选
         radioButtons.forEach { (rb, entry) ->
-            val projectPath = ":${entry.gradlePath}"
+            val projectPath = entry.gradlePath
             val isAdded = addedProjects.contains(projectPath)
             if (isAdded) {
                 rb.isEnabled = false
@@ -128,7 +128,7 @@ class DepSelectionDialog(
             listPanel.add(JBLabel(CbmBundle.message("dialog.dep_selection.no_module_hint")))
         } else {
             scanResult.allProjects.forEach { entry ->
-                val rb = JRadioButton(entry.name).apply {
+                val rb = JRadioButton("${entry.name}    ${entry.gradlePath}").apply {
                     alignmentX = JRadioButton.LEFT_ALIGNMENT
                     isSelected = false
                 }
@@ -161,13 +161,13 @@ class DepSelectionDialog(
 
     /** 获取已存在的所有依赖替换规则 */
     private fun getExistingDepSubstitutions(): List<DepSubstitution> {
-        return projectService.modules.flatMap { it.customDeps }
+        return projectService.modules.flatMap { it.substitutions }
     }
 
     /** 获取当前选中且启用的模块对应的 project 路径集合（Gradle 格式，带冒号前缀） */
     private fun getSelectedEnabledProjects(): Set<String> {
         return radioButtons.filter { (rb, _) -> rb.isEnabled && rb.isSelected }
-            .map { (_, entry) -> ":${entry.gradlePath}" }
+            .map { (_, entry) -> entry.gradlePath }
             .toSet()
     }
 
@@ -229,7 +229,7 @@ class DepSelectionDialog(
         return radioButtons.filter { (rb, _) -> rb.isEnabled && rb.isSelected }.map { (_, entry) ->
             DepSubstitution(
                 dep = cleanedDep.ifBlank { entry.name },
-                project = ":${entry.gradlePath}"  // 添加冒号前缀
+                project = entry.gradlePath
             )
         }
     }

@@ -6,6 +6,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
@@ -92,11 +94,6 @@ class CbmLineMarkerProvider : LineMarkerProvider {
                         Messages.showErrorDialog(project, error, CbmBundle.message("action.line_marker.invalid_gradle_title"))
                         return@chooseFile
                     }
-                    val scanResult = LocalBuildScanner.scan(buildDir)
-                    if (scanResult.allProjects.isEmpty()) {
-                        Messages.showErrorDialog(project, CbmBundle.message("action.line_marker.no_modules_message"), CbmBundle.message("action.line_marker.scan_failed_title"))
-                        return@chooseFile
-                    }
                     // 检查同名模块是否已存在
                     if (service.modules.any { it.name == vFile.name }) {
                         Messages.showErrorDialog(
@@ -106,10 +103,26 @@ class CbmLineMarkerProvider : LineMarkerProvider {
                         )
                         return@chooseFile
                     }
-                    val dialog = DepSelectionDialog(project, vFile.name, scanResult, service, suggestedDep)
-                    if (dialog.showAndGet()) {
-                        service.addCustomModule(vFile.name, vFile.path, dialog.getSelectedDeps())
-                    }
+                    object : Task.Backgroundable(project, "Scanning Gradle build…", false) {
+                        private var scanResult: LocalBuildScanner.ScanResult? = null
+
+                        override fun run(indicator: ProgressIndicator) {
+                            indicator.isIndeterminate = true
+                            scanResult = LocalBuildScanner.scan(buildDir)
+                        }
+
+                        override fun onSuccess() {
+                            val result = scanResult ?: return
+                            if (result.allProjects.isEmpty()) {
+                                Messages.showErrorDialog(project, CbmBundle.message("action.line_marker.no_modules_message"), CbmBundle.message("action.line_marker.scan_failed_title"))
+                                return
+                            }
+                            val dialog = DepSelectionDialog(project, vFile.name, result, service, suggestedDep)
+                            if (dialog.showAndGet()) {
+                                service.addCustomModule(vFile.name, vFile.path, dialog.getSelectedDeps())
+                            }
+                        }
+                    }.queue()
                 }
             },
             GutterIconRenderer.Alignment.LEFT,
